@@ -113,7 +113,7 @@ mod tests {
                     _ => false
                 };
 
-                first && second
+                first //&& second
             },
             _ => false
         };
@@ -128,12 +128,7 @@ mod tests {
                 };
 
                 let second = match list.cdr().car() {
-                    Some(Item::List(list)) => true,
-                    _ => false
-                };
-
-                let third = match list.cdr().car() {
-                    Some(Item::Nil) => true,
+                    Some(Item::List(_)) => true,
                     _ => false
                 };
 

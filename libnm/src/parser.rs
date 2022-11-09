@@ -33,36 +33,34 @@ fn parse_token(token: &String) -> Result<Item, String> {
     }
 }
 
-pub fn parse(mut tokens: Vec<String>) -> Result<Item, String> {
-    tokens.reverse();
+pub fn parse_helper(tokens: &Vec<String>, mut start: usize) -> Result<Item, String> {
+    let mut list = List::new();
 
-    let mut tokens = tokens.iter();
+    for i in start..tokens.len() {
+        let token = tokens.get(i).unwrap();
 
-    let mut stack : Vec<Item> = Vec::new();
-    let mut ending_list = List::new();
-
-    while let Some(token) = tokens.next() {
         if token == ")" {
-            stack.push(Item::List(List::new()));
+            match parse_helper(&tokens, i + 1) {
+                Ok(new_list) => list = list.prepend(new_list),
+                Err(msg) => return Err(msg)
+            }
         }
         else if token == "(" {
-            match stack.pop() {
-                Some(item) => {
-                    ending_list = ending_list.prepend(item);
-                } 
-                None => return Err(format!("Error, open paren with no closing paren"))
-            }
+            return Ok(Item::List(list))
         }
         else {
             match parse_token(token) {
                 Ok(item) => {
-                    stack.push(item)
+                    list = list.prepend(item);
                 },
                 Err(msg) => return Err(msg)
             }
         }
     }
+    Err(format!("Mismatched parentheses"))
+}
 
-    //stack.reverse();
-    Ok(Item::List(ending_list))
+pub fn parse(mut tokens: Vec<String>) -> Result<Item, String> {
+    tokens.reverse();
+    parse_helper(&tokens, 1)
 }

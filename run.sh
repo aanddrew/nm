@@ -1,3 +1,5 @@
+#!/bin/bash
+
 cd libnm
 cargo build
 cd ..

@@ -1,5 +1,3 @@
-use libnm::eval::{eval_string};
-use libnm::list::List;
 use libnm::parser::parse;
 use libnm::program::Item;
 
@@ -15,6 +13,19 @@ fn main() {
 
     let prog2 = parse(vec!["(", "nil", "(", "nil", ")", ")"].iter().map(|s| String::from(*s)).collect()).unwrap();
     match prog2 {
+        Item::List(list) => {
+            match list.cdr().car() {
+                Some(Item::List(list)) => println!("{:?}", list.car()),
+                _ => ()
+            }
+            //println!("{:?}", list.cdr().car().car());
+        },
+        _ => ()
+    };
+
+    println!("=-=-=-=-=-=-=-=");
+    let prog3 = parse(vec!["(", "nil", "nil", ")"].iter().map(|s| String::from(*s)).collect()).unwrap();
+    match prog3 {
         Item::List(list) => {
             println!("{:?}", list.cdr().car());
         },
