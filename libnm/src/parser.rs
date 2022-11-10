@@ -1,3 +1,5 @@
+use std::slice::Iter;
+
 use crate::program::*;
 use crate::list::*;
 
@@ -33,19 +35,19 @@ fn parse_token(token: &String) -> Result<Item, String> {
     }
 }
 
-pub fn parse_helper(tokens: &Vec<String>, mut start: usize) -> Result<Item, String> {
+pub fn parse_helper(tokens: &mut Iter<String>) -> Result<Item, String> {
     let mut list = List::new();
 
-    for i in start..tokens.len() {
-        let token = tokens.get(i).unwrap();
-
-        if token == "(" {
-            match parse_helper(&tokens, i + 1) {
-                Ok(new_list) => list = list.prepend(new_list),
+    while let Some(token) = tokens.next() {
+        if token == ")" {
+            match parse_helper(tokens) {
+                Ok(new_list ) => {
+                    list = list.prepend(new_list);
+                },
                 Err(msg) => return Err(msg)
             }
         }
-        else if token == ")" {
+        else if token == "(" {
             return Ok(Item::List(list))
         }
         else {
@@ -57,9 +59,10 @@ pub fn parse_helper(tokens: &Vec<String>, mut start: usize) -> Result<Item, Stri
             }
         }
     }
-    Err(format!("Mismatched parentheses"))
+    Ok(Item::List(list))
 }
 
 pub fn parse(mut tokens: Vec<String>) -> Result<Item, String> {
-    parse_helper(&tokens, 1)
+    tokens.reverse();
+    parse_helper(&mut tokens.iter())
 }
