@@ -39,13 +39,13 @@ pub fn parse_helper(tokens: &Vec<String>, mut start: usize) -> Result<Item, Stri
     for i in start..tokens.len() {
         let token = tokens.get(i).unwrap();
 
-        if token == ")" {
+        if token == "(" {
             match parse_helper(&tokens, i + 1) {
                 Ok(new_list) => list = list.prepend(new_list),
                 Err(msg) => return Err(msg)
             }
         }
-        else if token == "(" {
+        else if token == ")" {
             return Ok(Item::List(list))
         }
         else {
@@ -61,6 +61,5 @@ pub fn parse_helper(tokens: &Vec<String>, mut start: usize) -> Result<Item, Stri
 }
 
 pub fn parse(mut tokens: Vec<String>) -> Result<Item, String> {
-    tokens.reverse();
     parse_helper(&tokens, 1)
 }

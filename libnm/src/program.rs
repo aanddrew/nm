@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::list::List;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -62,7 +64,7 @@ pub fn get_operator(s: &String) -> Option<Operator> {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Item {
     List(List<Item>),
     Identifier(String),
@@ -76,4 +78,24 @@ pub enum Item {
     String(String),
     Boolean(bool),
     Nil,
+}
+
+impl fmt::Debug for Item {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Item::List(list) => {
+                f.write_str(format!("({:?}", list).as_str())
+            },
+            Item::Identifier(s) => f.write_str(s.as_str()),
+            Item::Builtin(s) => f.write_str(s.as_str()),
+            Item::Function(list1, list2, item) => f.write_str(format!("func({:?}, {:?}, {:?}", list1, list2, item).as_str()),
+            Item::FunCall(args, ident) => f.write_str(format!("funcall({:?}, {:?})", args, ident).as_str()),
+            Item::Operator(op) => f.write_str(format!("{:?}", op).as_str()),
+            Item::Number(i) => f.write_str(format!("{:?}", i).as_str()),
+            Item::Float(num) => f.write_str(format!("{:?}", num).as_str()),
+            Item::String(s) => f.write_str(format!("\"{:?}\"", s).as_str()),
+            Item::Boolean(b) => f.write_str(format!("{:?}", b).as_str()),
+            Item::Nil => f.write_str("nil"),
+        }
+    }
 }

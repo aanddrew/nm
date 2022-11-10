@@ -1,5 +1,7 @@
 use std::{rc::Rc, sync::Arc, fmt};
 
+use crate::program::Item;
+
 pub struct List <T> {
     head: Link<T>
 }
@@ -87,14 +89,25 @@ impl<T> Drop for List<T> {
     }
 }
 
-impl<Item: std::fmt::Debug> fmt::Debug for List<Item> {
+impl fmt::Debug for List<Item> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("List").field("head", &self.head).finish()
+        let separator = if self.cdr().car().is_none() { "" } else { " " };
+        match self.car() {
+            Some(item) => f.write_str(format!("{:?}{}{:?}", item, separator, self.cdr()).as_str()),
+            _ => f.write_str(")"),
+        }
+        //f.debug_struct("List").field("head", &self.head).finish()
     }
 }
 
-impl<Item: std::fmt::Debug> fmt::Debug for Node<Item> {
+impl fmt::Debug for Node<Item> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Node").field("car", &self.car).field("next", &self.next).finish()
+        match &self.car {
+            Item::List(list) => match &list.head { 
+                Some(node) => f.debug_struct("List").field("head", &node).finish(),
+                None => f.write_str(")")
+            },
+            _ => f.debug_struct("Node").field("car", &self.car).field("next", &self.next).finish()
+        }
     }
 }

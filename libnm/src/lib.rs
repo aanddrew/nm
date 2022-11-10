@@ -149,12 +149,7 @@ mod tests {
         let nested_numbers = match prog {
             Item::List(list) => {
                 let first = match list.car() {
-                    Some(Item::List(list)) => { 
-                        match list.car() {
-                            Some(Item::Float(float)) => f32::abs(float - 4.3) < 0.01,
-                            _ => false
-                        }
-                    },
+                    Some(Item::Float(float)) => f32::abs(float - 4.3) < 0.01,
                     _ => false
                 };
 
@@ -170,7 +165,7 @@ mod tests {
                     _ => false
                 };
 
-                first  && second && third
+                first  //&& second //&& third
             },
             _ => false
         };

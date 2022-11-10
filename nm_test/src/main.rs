@@ -1,3 +1,4 @@
+use libnm::lexer::lex;
 use libnm::parser::parse;
 use libnm::program::Item;
 
@@ -31,5 +32,11 @@ fn main() {
         },
         _ => ()
     };
+
+
+    println!("=-=-=-=-=-=-=-=");
+    println!("{:?}", parse(lex(&format!("(4.3 2 (5 6))"))).expect("can't parse"));
+    println!("{:?}", parse(lex(&format!("(nil nil)"))).expect("can't parse"));
+    println!("{:?}", parse(lex(&format!("(5 (nil nil) nil)"))).expect("can't parse"));
     //dbg!(prog2);
 }
