@@ -64,5 +64,7 @@ pub fn parse_helper(tokens: &mut Iter<String>) -> Result<Item, String> {
 
 pub fn parse(mut tokens: Vec<String>) -> Result<Item, String> {
     tokens.reverse();
-    parse_helper(&mut tokens.iter())
+    let mut iter = tokens.iter();
+    iter.next();
+    parse_helper(&mut iter)
 }
