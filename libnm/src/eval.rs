@@ -10,7 +10,7 @@ fn two_floats<F>(float1: f32, float2: f32, fun: F) -> f32 where F: Fn(f32, f32) 
     fun(float1, float2)
 }
 
-pub fn f32_matherate(op: &BinaryOperator) -> Box<dyn Fn(f32, f32) -> f32> {
+fn f32_matherate(op: &BinaryOperator) -> Box<dyn Fn(f32, f32) -> f32> {
     let result = match op {
         BinaryOperator::Mul => |a, b| a * b,
         BinaryOperator::Div => |a, b| a / b,
@@ -20,7 +20,7 @@ pub fn f32_matherate(op: &BinaryOperator) -> Box<dyn Fn(f32, f32) -> f32> {
     Box::new(move |a, b| result(a,b))
 }
 
-pub fn i32_matherate(op: &BinaryOperator) -> Box<dyn Fn(i32, i32) -> i32> {
+fn i32_matherate(op: &BinaryOperator) -> Box<dyn Fn(i32, i32) -> i32> {
     let result = match op {
         BinaryOperator::Mul => |a, b| a * b,
         BinaryOperator::Div => |a, b| a / b,
@@ -30,22 +30,37 @@ pub fn i32_matherate(op: &BinaryOperator) -> Box<dyn Fn(i32, i32) -> i32> {
     Box::new(move |a, b| result(a,b))
 }
 
-pub fn operate(op: &Operator, args: List<Item>, env: &mut List<(&String, Item)>) -> Result<Item, String> {
+fn operate(op: &Operator, args: List<Item>, env: &mut List<(&str, Item)>) -> Result<Item, String> {
     let cdr = args.cdr();
     let (arg1, arg2) = (args.car(), cdr.car());
 
+    let arg1_eval = match arg1 {
+        Some(item) => match eval(item, env) {
+            Ok(evaluated) => evaluated,
+            Err(msg) => return Err(msg)
+        }
+        None => return Err(format!("Missing argument for operator {:?}", op))
+    };
+    let arg2_eval = match arg2 {
+        Some(item) => match eval(item, env) {
+            Ok(evaluated) => evaluated,
+            Err(msg) => return Err(msg)
+        }
+        None => return Err(format!("Missing argument for operator {:?}", op))
+    };
+
     match op {
         Operator::BinaryOperator(binary_op) => {
-            match (arg1, arg2) {
-                (Some(Item::Number(num)), Some(Item::Number(num2))) => {
+            match (arg1_eval, arg2_eval) {
+                (Item::Number(num), Item::Number(num2)) => {
                     let i32_func = i32_matherate(&binary_op);
-                    Ok(Item::Number(i32_func(*num, *num2)))
+                    Ok(Item::Number(i32_func(num, num2)))
                 },
-                (Some(Item::Float(num)), Some(Item::Float(num2))) => {
+                (Item::Float(num), Item::Float(num2)) => {
                     let f32_func = f32_matherate(&binary_op);
-                    Ok(Item::Float(f32_func(*num, *num2)))
+                    Ok(Item::Float(f32_func(num, num2)))
                 },
-                _ => Err(format!("Error, argument to operator must be the same type")),
+                _ => Err(format!("Error, arguments {:?}, {:?} are not the same type", arg1, arg2)),
             }
         }
         _ => match (arg1, arg2) {
@@ -55,11 +70,18 @@ pub fn operate(op: &Operator, args: List<Item>, env: &mut List<(&String, Item)>)
     }
 }
 
-pub fn funcerate(func_name: &String, args: List<Item>, env: &mut List<(&String, Item)>) -> Result<Item, String> {
+fn funcerate(func_name: &String, args: List<Item>, env: &mut List<(&str, Item)>) -> Result<Item, String> {
     Ok(Item::Nil)
 }
 
-pub fn eval(program: &Item, env: &mut List<(&String, Item)>) -> Result<Item, String> {
+pub fn default_env() -> List<(&'static str, Item)> {
+    let mut list = List::new();
+    list = list.prepend(("e", Item::Float(std::f32::consts::E)));
+    list = list.prepend(("pi", Item::Float(std::f32::consts::PI)));
+    list
+}
+
+pub fn eval(program: &Item, env: &mut List<(&str, Item)>) -> Result<Item, String> {
     match program {
         Item::List(list) => {
             if let Some(Item::Operator(op)) = list.car() {
@@ -92,14 +114,23 @@ pub fn eval(program: &Item, env: &mut List<(&String, Item)>) -> Result<Item, Str
                 //Err(format!("found something other than op or func at front of list"))
             }
         },
-        _ => Err(format!("Expected list, found something else"))
+        Item::Identifier(ident) => {
+            let mut cursor = env.iter();
+            while let Some((string, item)) = cursor.next() {
+                if string == ident {
+                    return Ok(item.clone())
+                }
+            }
+            return Err(format!("Identifier not found: {}", ident))
+        },
+        _ => Ok(program.clone())
     }
 }
 
-pub fn eval_string(program_string : &String, env: &mut List<(&String, Item)>) -> Result<Item, String> {
+pub fn eval_string(program_string : &String, env: &mut List<(&str, Item)>) -> Result<Item, String> {
     let tokens = lex(program_string);
     match parse(tokens) {
-        Ok(prog) => eval(&prog, &mut List::new()),
+        Ok(prog) => eval(&prog, env),
         Err(msg) => Err(msg)
     }
     //parse(lex(program_string)).map(|prog| eval(prog, env))

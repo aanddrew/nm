@@ -8,7 +8,7 @@ pub mod eval;
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap};
+    use std::{collections::HashMap, f32::consts::E};
 
     use super::*;
 
@@ -165,7 +165,7 @@ mod tests {
                     _ => false
                 };
 
-                first  //&& second //&& third
+                first  && second && third
             },
             _ => false
         };
@@ -174,23 +174,17 @@ mod tests {
         let prog2 = parse(vec!["(", "56.2", "43.8", ")"].iter().map(|s| String::from(*s)).collect()).unwrap();
         let floats = match prog2 {
             Item::List(list) => {
-                if let Some(Item::List(list)) = list.car() {
-                    let first_match = match list.car() {
-                        Some(Item::Float(num)) => f32::abs(56.2 - num) < 0.001,
-                        _ => false
-                    };
+                let first_match = match list.car() {
+                    Some(Item::Float(num)) => f32::abs(56.2 - num) < 0.001,
+                    _ => false
+                };
 
-                    let second_match = match list.cdr().car() {
-                        Some(Item::Float(num)) => f32::abs(43.8 - num) < 0.001,
-                        _ => false
-                    };
+                let second_match = match list.cdr().car() {
+                    Some(Item::Float(num)) => f32::abs(43.8 - num) < 0.001,
+                    _ => false
+                };
 
-                    first_match && second_match
-
-                }
-                else {
-                    false
-                }
+                first_match && second_match
             },
             _ => false
         };
@@ -198,7 +192,7 @@ mod tests {
     }
 
     #[test]
-    fn eval() {
+    fn arithmetic() {
         use eval::{eval, eval_string};
         use program::{Item, Operator};
         use list::List;
@@ -206,6 +200,41 @@ mod tests {
         let mut env = List::new();
         match eval_string(&format!("(* 3 2)"), &mut env) {
             Ok(Item::Number(num)) => assert!(num == 6),
+            Err(msg) => assert!(msg.as_str() == ""),
+            _ => assert!(1 == 2)
+        }
+
+        env = List::new();
+        match eval_string(&format!("(+ 3 2)"), &mut env) {
+            Ok(Item::Number(num)) => assert!(num == 5),
+            Err(msg) => assert!(msg.as_str() == ""),
+            _ => assert!(1 == 2)
+        }
+
+        env = List::new();
+        match eval_string(&format!("(/ 10 2)"), &mut env) {
+            Ok(Item::Number(num)) => assert!(num == 5),
+            Err(msg) => assert!(msg.as_str() == ""),
+            _ => assert!(1 == 2)
+        }
+
+        env = List::new();
+        match eval_string(&format!("(- 10 2)"), &mut env) {
+            Ok(Item::Number(num)) => assert!(num == 8),
+            Err(msg) => assert!(msg.as_str() == ""),
+            _ => assert!(1 == 2)
+        }
+    }
+
+    #[test]
+    fn math_functions() {
+        use eval::{eval, eval_string, default_env};
+        use program::{Item, Operator};
+        use list::List;
+
+        let mut env = default_env();
+        match eval_string(&format!("(* e 2.0)"), &mut env) {
+            Ok(Item::Float(num)) => assert!(f32::abs((E * 2.0) - num) < 0.01),
             Err(msg) => assert!(msg.as_str() == ""),
             _ => assert!(1 == 2)
         }
