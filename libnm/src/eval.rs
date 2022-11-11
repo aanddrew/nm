@@ -85,32 +85,37 @@ pub fn default_env() -> List<(&'static str, Item)> {
 pub fn eval(program: &Item, env: &List<(&str, Item)>) -> Result<Item, String> {
     match program {
         Item::List(list) => {
-            if let Some(Item::Operator(op)) = list.car() {
-                operate(op, list.cdr(), env)
+            //evalute the first arg incase it's a function or something
+            let first_arg;
+            match list.car() {
+                Some(item) => first_arg = item,
+                None => return Ok(Item::Nil)
+            };
+            let first_arg_eval;
+            match eval(&first_arg, env) {
+                Ok(res) => first_arg_eval = res,
+                Err(msg) => return Err(msg)
             }
-            else if let Some(Item::FunCall(name, args)) = list.car() {
-                let func = eval(&Item::Identifier(name.clone()), env);
-                match func {
-                    Ok(Item::Function(arg_names, item)) => {
-                        //let's turn this funcal into a let statement
-                        let l = Item::Builtin(Builtin::Let);
-                        let val_list = args.clone();
-                        let mut new_program_list = List::new();
-                        new_program_list = new_program_list.prepend(*item);
-                        //rust screaming if we don't store on the heap
-                        new_program_list = new_program_list.prepend(Item::List(val_list));
-                        new_program_list = new_program_list.prepend(Item::List(arg_names));
-                        new_program_list = new_program_list.prepend(Item::Builtin(Builtin::Let));
 
-                        let new_program = Item::List(new_program_list);
-                        eval(&new_program, env)
-                    },
-                    Ok(_) => Err(format!("Expected function, found {:?}", func)),
-                    Err(msg) => Err(msg)
-                }
+            if let Item::Operator(op) = first_arg_eval {
+                operate(&op, list.cdr(), env)
+            }
+            else if let Item::Function(arg_names, func) = first_arg_eval {
+                let args = list.cdr();
+                let l = Item::Builtin(Builtin::Let);
+                let val_list = args.clone();
+
+                let mut new_program_list = List::new();
+                new_program_list = new_program_list.prepend(*func);
+                new_program_list = new_program_list.prepend(Item::List(list.cdr()));
+                new_program_list = new_program_list.prepend(Item::List(arg_names));
+                new_program_list = new_program_list.prepend(Item::Builtin(Builtin::Let));
+
+                let new_program = Item::List(new_program_list);
+                println!("{:?}", new_program);
+                eval(&new_program, env)
             }
             else if let Some(Item::Builtin(s)) = list.car() {
-                println!("Hello");
                 builtinerate(s, &list.cdr(), env)
             }
             else {

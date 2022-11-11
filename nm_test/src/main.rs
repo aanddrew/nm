@@ -11,4 +11,10 @@ fn main() {
     println!("{:?}", eval_string(&format!("(* e 2.0)"), default_env()).unwrap());
     println!("{:?}", eval_string(&format!("(let (x y) (2.0 4.0) (* x y))"), default_env()).unwrap());
     //dbg!(prog2);
+    let let_func_program = 
+        "(let (f) \
+            ((func (x) (+ 2 x))) \
+                (f 8))";
+    println!("{:?}", parse(lex(&format!("{}", let_func_program))));
+    println!("{:?}", eval_string(&format!("{}", let_func_program), default_env()).unwrap());
 }

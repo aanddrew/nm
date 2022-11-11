@@ -261,5 +261,29 @@ mod tests {
             Ok(Item::Number(num)) => assert!(num == 8),
             _ => assert!(false)
         }
+
+        let let_func_program = "(let (f) \
+                                    ((func (x) (* 2 x))) \
+                                        (f 3))";
+        match eval_string(&format!("{}", let_func_program), default_env()) {
+            Ok(Item::Number(num)) => assert!(num == 6),
+            _ => assert!(false)
+        }
+
+        let let_func_program = "(let (f) \
+                                    ((func (x y) (* x y))) \
+                                        (f 3 5))";
+        match eval_string(&format!("{}", let_func_program), default_env()) {
+            Ok(Item::Number(num)) => assert!(num == 15),
+            _ => assert!(false)
+        }
+
+        let let_func_program = "(let (f) \
+                                    ((func (x y z) (* x (+ y z)))) \
+                                        (f 3 5 7))";
+        match eval_string(&format!("{}", let_func_program), default_env()) {
+            Ok(Item::Number(num)) => assert!(num == 36),
+            _ => assert!(false)
+        }
     }
 }
