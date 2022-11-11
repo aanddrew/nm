@@ -110,6 +110,7 @@ pub fn eval(program: &Item, env: &List<(&str, Item)>) -> Result<Item, String> {
                 }
             }
             else if let Some(Item::Builtin(s)) = list.car() {
+                println!("Hello");
                 builtinerate(s, &list.cdr(), env)
             }
             else {

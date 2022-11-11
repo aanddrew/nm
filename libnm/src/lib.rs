@@ -9,7 +9,9 @@ pub mod builtins;
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, f32::consts::E};
+    use std::{collections::HashMap, f32::consts::{E, PI}};
+
+    use crate::{eval::{default_env, eval_string}, program::Item};
 
     use super::*;
 
@@ -199,28 +201,28 @@ mod tests {
         use list::List;
 
         let mut env = List::new();
-        match eval_string(&format!("(* 3 2)"), &mut env) {
+        match eval_string(&format!("(* 3 2)"), env) {
             Ok(Item::Number(num)) => assert!(num == 6),
             Err(msg) => assert!(msg.as_str() == ""),
             _ => assert!(1 == 2)
         }
 
         env = List::new();
-        match eval_string(&format!("(+ 3 2)"), &mut env) {
+        match eval_string(&format!("(+ 3 2)"), env) {
             Ok(Item::Number(num)) => assert!(num == 5),
             Err(msg) => assert!(msg.as_str() == ""),
             _ => assert!(1 == 2)
         }
 
         env = List::new();
-        match eval_string(&format!("(/ 10 2)"), &mut env) {
+        match eval_string(&format!("(/ 10 2)"), env) {
             Ok(Item::Number(num)) => assert!(num == 5),
             Err(msg) => assert!(msg.as_str() == ""),
             _ => assert!(1 == 2)
         }
 
         env = List::new();
-        match eval_string(&format!("(- 10 2)"), &mut env) {
+        match eval_string(&format!("(- 10 2)"), env) {
             Ok(Item::Number(num)) => assert!(num == 8),
             Err(msg) => assert!(msg.as_str() == ""),
             _ => assert!(1 == 2)
@@ -234,10 +236,30 @@ mod tests {
         use list::List;
 
         let mut env = default_env();
-        match eval_string(&format!("(* e 2.0)"), &mut env) {
+        match eval_string(&format!("(* e 2.0)"), env) {
             Ok(Item::Float(num)) => assert!(f32::abs((E * 2.0) - num) < 0.01),
             Err(msg) => assert!(msg.as_str() == ""),
-            _ => assert!(1 == 2)
+            _ => assert!(false)
+        }
+
+        let mut env = default_env();
+        match eval_string(&format!("(* pi 3.4)"), env) {
+            Ok(Item::Float(num)) => assert!(f32::abs((PI * 3.4) - num) < 0.01),
+            Err(msg) => assert!(msg.as_str() == ""),
+            _ => assert!(false)
+        }
+    }
+
+    #[test]
+    fn lets() {
+        use eval::{eval, eval_string, default_env};
+        use program::{Item, Operator};
+        use list::List;
+
+        let mut env = default_env();
+        match eval_string(&format!("(let (x) (4) (* x 2))"), env) {
+            Ok(Item::Number(num)) => assert!(num == 8),
+            _ => assert!(false)
         }
     }
 }

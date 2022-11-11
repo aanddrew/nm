@@ -13,10 +13,10 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
         Builtin::Let => {
             match (list.car(), list.cdr().car(), list.cdr().cdr().car()) {
                 (Some(Item::List(idents)), Some(Item::List(items)), program) => {
-                    let idents_cur = idents;
-                    let items_cur = items;
+                    let mut idents_cur = idents.iter();
+                    let mut items_cur = items.iter();
                     let mut new_env = env.clone();
-                    while let (Some(Item::Identifier(name)), Some(item)) = (idents_cur.car(), items_cur.car()) {
+                    while let (Some(Item::Identifier(name)), Some(item)) = (idents_cur.next(), items_cur.next()) {
                         match eval(&item, env) {
                             Ok(result) => {
                                 new_env = new_env.prepend((name.as_str(), result));
