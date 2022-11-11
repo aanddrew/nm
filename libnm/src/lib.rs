@@ -5,6 +5,7 @@ pub mod list;
 pub mod program;
 pub mod parser;
 pub mod eval;
+pub mod builtins;
 
 #[cfg(test)]
 mod tests {

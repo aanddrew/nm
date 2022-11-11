@@ -4,7 +4,8 @@ use crate::
     {program::{Item, Operator, self, BinaryOperator}, 
     list::List, 
     parser::parse, 
-    lexer::lex};
+    lexer::lex,
+    builtins::builtinerate};
 
 fn two_floats<F>(float1: f32, float2: f32, fun: F) -> f32 where F: Fn(f32, f32) -> f32 {
     fun(float1, float2)
@@ -30,7 +31,7 @@ fn i32_matherate(op: &BinaryOperator) -> Box<dyn Fn(i32, i32) -> i32> {
     Box::new(move |a, b| result(a,b))
 }
 
-fn operate(op: &Operator, args: List<Item>, env: &mut List<(&str, Item)>) -> Result<Item, String> {
+fn operate(op: &Operator, args: List<Item>, env: &List<(&str, Item)>) -> Result<Item, String> {
     let cdr = args.cdr();
     let (arg1, arg2) = (args.car(), cdr.car());
 
@@ -70,7 +71,7 @@ fn operate(op: &Operator, args: List<Item>, env: &mut List<(&str, Item)>) -> Res
     }
 }
 
-fn funcerate(func_name: &String, args: List<Item>, env: &mut List<(&str, Item)>) -> Result<Item, String> {
+fn funcerate(func_name: &String, args: List<Item>, env: &List<(&str, Item)>) -> Result<Item, String> {
     Ok(Item::Nil)
 }
 
@@ -81,33 +82,41 @@ pub fn default_env() -> List<(&'static str, Item)> {
     list
 }
 
-pub fn eval(program: &Item, env: &mut List<(&str, Item)>) -> Result<Item, String> {
+pub fn eval(program: &Item, env: &List<(&str, Item)>) -> Result<Item, String> {
     match program {
         Item::List(list) => {
             if let Some(Item::Operator(op)) = list.car() {
                 operate(op, list.cdr(), env)
             }
-            else if let Some(Item::Function(args, vals, code)) = list.car() {
-                let mut count = 0;
-                let new_env = env;
-                let next_args = args;
-                while let (Some(Item::Identifier(ident)), Some(val)) = (next_args.car(), vals.car()) {
-                    match eval(&val, new_env) {
-                        Ok(evaluated) => {
-                            new_env.prepend((ident, evaluated));
-                        },
-                        Err(msg) => return Err(msg)
-                    }
-                    let next_args = &next_args.cdr();
-                }
-                if let Some(Item::Identifier(arg)) = args.car() {
-                    return Err(format!("Error, not enough arguments supplied to function"))
-                }
-                else if let Some(arg) = args.car() {
-                    return Err(format!("Error: function argument definition was not an identifier"))
-                }
+            else if let Some(Item::FunCall(name, args)) = list.car() {
+                let func = eval(&Item::Identifier(name.clone()), env);
+                match func {
+                    Ok(Item::Function(arg_names, item)) => {
+                        /*
+                        //let mut new_env = env.clone();
+                        let let_prog = 
+                        let mut cursor = (arg_names.iter(), args.iter());
+                        while let (Some(Item::Identifier(arg_name)), Some(arg)) = (cursor.0.next(), cursor.1.next()) {
+                            let eval_res = eval(arg, env);
+                            match eval_res {
+                                Ok(arg_eval) => {
+                                    let temp = arg_name.as_str();
+                                    new_env = new_env.prepend((arg_name.as_str(), arg_eval))
+                                },
+                                Err(msg) => return Err(msg)
+                            }
+                        }
 
-                eval(code, new_env)
+                        */
+                        //eval(&*item, env)
+                        Ok(Item::Nil)
+                    },
+                    Ok(_) => Err(format!("Expected function, found {:?}", func)),
+                    Err(msg) => Err(msg)
+                }
+            }
+            else if let Some(Item::Builtin(s)) = list.car() {
+                builtinerate(s, &list.cdr(), env)
             }
             else {
                 Ok(program.clone())
@@ -127,11 +136,10 @@ pub fn eval(program: &Item, env: &mut List<(&str, Item)>) -> Result<Item, String
     }
 }
 
-pub fn eval_string(program_string : &String, env: &mut List<(&str, Item)>) -> Result<Item, String> {
+pub fn eval_string(program_string : &String, env: List<(&str, Item)>) -> Result<Item, String> {
     let tokens = lex(program_string);
     match parse(tokens) {
-        Ok(prog) => eval(&prog, env),
+        Ok(prog) => eval(&prog, &env),
         Err(msg) => Err(msg)
     }
-    //parse(lex(program_string)).map(|prog| eval(prog, env))
 }

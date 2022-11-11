@@ -21,8 +21,11 @@ fn parse_token(token: &String) -> Result<Item, String> {
     else if token == "false" {
         return Ok(Item::Boolean(false))
     }
-    if let(Some(op)) = get_operator(token) {
+    else if let(Some(op)) = get_operator(token) {
         return Ok(Item::Operator(op));
+    }
+    else if let(Some(built)) = get_builtin(token) {
+        return Ok(Item::Builtin(built));
     }
     else if token.ends_with("\"") && token.starts_with("\"") {
         return Ok(Item::String(String::from(&token[1..token.len()- 1])));

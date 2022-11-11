@@ -63,14 +63,31 @@ pub fn get_operator(s: &String) -> Option<Operator> {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum Builtin {
+    Func,
+    Progn,
+    Print,
+    Let,
+}
+
+pub fn get_builtin(s: &String) -> Option<Builtin> {
+    match s.as_str() {
+        "func"  => Some(Builtin::Func),
+        "progn" => Some(Builtin::Progn),
+        "print" => Some(Builtin::Print),
+        "let"   => Some(Builtin::Let),
+        _ => None
+    }
+}
 
 #[derive(Clone)]
 pub enum Item {
     List(List<Item>),
     Identifier(String),
-    Builtin(String),
-    Function(List<Item>, List<Item>, Box<Item>),
-    FunCall(List<Item>, String),
+    Builtin(Builtin),
+    Function(List<Item>, Box<Item>),
+    FunCall(String, List<Item>),
 
     Operator(Operator),
     Number(i32),
@@ -87,8 +104,8 @@ impl fmt::Debug for Item {
                 f.write_str(format!("({:?}", list).as_str())
             },
             Item::Identifier(s) => f.write_str(s.as_str()),
-            Item::Builtin(s) => f.write_str(s.as_str()),
-            Item::Function(list1, list2, item) => f.write_str(format!("func({:?}, {:?}, {:?}", list1, list2, item).as_str()),
+            Item::Builtin(s) => f.write_str(format!("{:?}", s).as_str()),
+            Item::Function(list, item) => f.write_str(format!("func({:?} {:?})", list, item).as_str()),
             Item::FunCall(args, ident) => f.write_str(format!("funcall({:?}, {:?})", args, ident).as_str()),
             Item::Operator(op) => f.write_str(format!("{:?}", op).as_str()),
             Item::Number(i) => f.write_str(format!("{:?}", i).as_str()),
