@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::
-    {program::{Item, Operator, self, BinaryOperator}, 
+    {program::{Item, Operator, self, BinaryOperator, Builtin}, 
     list::List, 
     parser::parse, 
     lexer::lex,
@@ -92,24 +92,18 @@ pub fn eval(program: &Item, env: &List<(&str, Item)>) -> Result<Item, String> {
                 let func = eval(&Item::Identifier(name.clone()), env);
                 match func {
                     Ok(Item::Function(arg_names, item)) => {
-                        /*
-                        //let mut new_env = env.clone();
-                        let let_prog = 
-                        let mut cursor = (arg_names.iter(), args.iter());
-                        while let (Some(Item::Identifier(arg_name)), Some(arg)) = (cursor.0.next(), cursor.1.next()) {
-                            let eval_res = eval(arg, env);
-                            match eval_res {
-                                Ok(arg_eval) => {
-                                    let temp = arg_name.as_str();
-                                    new_env = new_env.prepend((arg_name.as_str(), arg_eval))
-                                },
-                                Err(msg) => return Err(msg)
-                            }
-                        }
+                        //let's turn this funcal into a let statement
+                        let l = Item::Builtin(Builtin::Let);
+                        let val_list = args.clone();
+                        let mut new_program_list = List::new();
+                        new_program_list = new_program_list.prepend(*item);
+                        //rust screaming if we don't store on the heap
+                        new_program_list = new_program_list.prepend(Item::List(val_list));
+                        new_program_list = new_program_list.prepend(Item::List(arg_names));
+                        new_program_list = new_program_list.prepend(Item::Builtin(Builtin::Let));
 
-                        */
-                        //eval(&*item, env)
-                        Ok(Item::Nil)
+                        let new_program = Item::List(new_program_list);
+                        eval(&new_program, env)
                     },
                     Ok(_) => Err(format!("Expected function, found {:?}", func)),
                     Err(msg) => Err(msg)
