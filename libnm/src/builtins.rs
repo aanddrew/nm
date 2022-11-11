@@ -10,6 +10,29 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
                 _ => Err(format!("Function needs (args) (eval)"))
             }
         },
+        Builtin::Progn => {
+            let mut cursor = list.iter();
+            let mut last_eval = None;
+            while let Some(item) = cursor.next() {
+                match eval(item, env) {
+                    Ok(evaluated) => last_eval = Some(evaluated),
+                    Err(msg) => return Err(msg)
+                }
+            }
+            match last_eval {
+                Some(result) => Ok(result),
+                None => Err(format!("Error, progn has no programs in it!"))
+            }
+        },
+        Builtin::Print => {
+            match list.car() {
+                Some(Item::String(printout)) => {
+                    println!("{}", printout);
+                    Ok(Item::Nil)
+                },
+                _ => Err(format!("Error: Print must be followed by a string!"))
+            }
+        },
         Builtin::Let => {
             match (list.car(), list.cdr().car(), list.cdr().cdr().car()) {
                 (Some(Item::List(idents)), Some(Item::List(items)), program) => {

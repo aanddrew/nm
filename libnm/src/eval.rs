@@ -119,7 +119,21 @@ pub fn eval(program: &Item, env: &List<(&str, Item)>) -> Result<Item, String> {
                 builtinerate(s, &list.cdr(), env)
             }
             else {
-                Ok(program.clone())
+                let mut evaluated_vec: Vec<Result<Item, String>> = list.iter().map(|item| eval(item, env)).collect();
+                evaluated_vec.reverse();
+
+                let mut new_list = List::new();
+
+                for evaled in evaluated_vec {
+                    match evaled {
+                        Ok(item) => {
+                            new_list = new_list.prepend(item);
+                        },
+                        Err(msg) => return Err(msg)
+                    }
+                }
+                Ok(Item::ListLiteral(new_list))
+                //Ok(program.clone())
                 //Err(format!("found something other than op or func at front of list"))
             }
         },

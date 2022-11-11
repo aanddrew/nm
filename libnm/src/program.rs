@@ -69,6 +69,7 @@ pub enum Builtin {
     Progn,
     Print,
     Let,
+    If,
 }
 
 pub fn get_builtin(s: &String) -> Option<Builtin> {
@@ -77,6 +78,7 @@ pub fn get_builtin(s: &String) -> Option<Builtin> {
         "progn" => Some(Builtin::Progn),
         "print" => Some(Builtin::Print),
         "let"   => Some(Builtin::Let),
+        "if"    => Some(Builtin::If),
         _ => None
     }
 }
@@ -84,6 +86,7 @@ pub fn get_builtin(s: &String) -> Option<Builtin> {
 #[derive(Clone)]
 pub enum Item {
     List(List<Item>),
+    ListLiteral(List<Item>),
     Identifier(String),
     Builtin(Builtin),
     Function(List<Item>, Box<Item>),
@@ -102,6 +105,9 @@ impl fmt::Debug for Item {
         match self {
             Item::List(list) => {
                 f.write_str(format!("({:?}", list).as_str())
+            },
+            Item::ListLiteral(list) => {
+                f.write_str(format!("'({:?}", list).as_str())
             },
             Item::Identifier(s) => f.write_str(s.as_str()),
             Item::Builtin(s) => f.write_str(format!("{:?}", s).as_str()),

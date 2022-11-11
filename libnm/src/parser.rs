@@ -50,6 +50,9 @@ pub fn parse_helper(tokens: &mut Iter<String>) -> Result<Item, String> {
                 Err(msg) => return Err(msg)
             }
         }
+        else if token == "'(" {
+            return Ok(Item::ListLiteral(list))
+        }
         else if token == "(" {
             return Ok(Item::List(list))
         }
@@ -62,12 +65,13 @@ pub fn parse_helper(tokens: &mut Iter<String>) -> Result<Item, String> {
             }
         }
     }
+    list = list.prepend(Item::Builtin(Builtin::Progn));
     Ok(Item::List(list))
 }
 
 pub fn parse(mut tokens: Vec<String>) -> Result<Item, String> {
     tokens.reverse();
     let mut iter = tokens.iter();
-    iter.next();
+    //iter.next();
     parse_helper(&mut iter)
 }
