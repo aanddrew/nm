@@ -1,8 +1,21 @@
+use std::env::{self, args};
+use std::fs;
+
 use libnm::eval::{eval_string, default_env};
 use libnm::lexer::lex;
 use libnm::parser::parse;
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() > 1 {
+        let file_name = args.get(1).unwrap();
+        match eval_string(&fs::read_to_string(file_name).unwrap(), default_env()) {
+            Ok(result) => println!("[result] {:?}", result),
+            Err(msg) => println!("Error: {}", msg)
+        }
+        return;
+    }
+
     println!("=-=-=-=-=-=-=-=");
     println!("{:?}", parse(lex(&format!("(4.3 2 12 (5 6))"))).expect("can't parse"));
     println!("{:?}", parse(lex(&format!("(nil nil)"))).expect("can't parse"));

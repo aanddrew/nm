@@ -254,8 +254,6 @@ pub fn eval(program: &Item, env: &List<(&str, Item)>) -> Result<Item, String> {
                     let appender = Item::List(arg_list);
                     new_program_list = new_program_list.prepend(appender);
                 }
-                //new_program_list = new_program_list.prepend(Item::List(list.cdr()));
-                //new_program_list = new_program_list.prepend(Item::List(arg_names));
                 new_program_list = new_program_list.prepend(Item::Builtin(Builtin::Let));
 
                 let new_program = Item::List(new_program_list);

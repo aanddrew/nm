@@ -1,2 +1,4 @@
 libnm/target
 nm_test/target
+libnm/target/.*
+nm_test/target/.*

@@ -33,7 +33,11 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
                             print!("{}", printout);
                             Ok(Item::Nil)
                         },
-                        Ok(_) => Err(format!("Error: Print must be followed by a string!")),
+                        Ok(res) => {
+                            println!("{:?}", res);
+                            Ok(Item::Nil)
+                        },
+                        //Ok(_) => Err(format!("Error: Print must be followed by a string!")),
                         Err(msg) => Err(msg)
                     }
                 },
@@ -74,29 +78,6 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
                 }
             }
             Err(format!("Error, couldn't evaluate let"))
-
-            /*
-            match (list.car(), list.cdr().car(), list.cdr().cdr().car()) {
-                (Some(Item::List(idents)), Some(Item::List(items)), program) => {
-                    let mut idents_cur = idents.iter();
-                    let mut items_cur = items.iter();
-                    let mut new_env = env.clone();
-                    while let (Some(Item::Identifier(name)), Some(item)) = (idents_cur.next(), items_cur.next()) {
-                        match eval(&item, env) {
-                            Ok(result) => {
-                                new_env = new_env.prepend((name.as_str(), result));
-                            }
-                            Err(msg) => return Err(msg)
-                        }
-                    }
-                    if let Some(prog) = program {
-                        return eval(prog, &new_env);
-                    } 
-                    Err(format!("Let requires three args (names) (values) (prog)"))
-                },
-                _ => Err(format!("Let requires two lists (names) (evals)"))
-            }
-            */
         },
         Builtin::If => {
             let condition = match list.car() {

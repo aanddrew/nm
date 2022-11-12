@@ -4,5 +4,5 @@ cd libnm
 cargo build
 cd ..
 cd nm_test
-cargo run
+cargo run "$1"
 cd ..
