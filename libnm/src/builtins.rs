@@ -1,8 +1,9 @@
+use std::io;
+
 use crate::{program::{Item, Builtin}, list::List, eval::eval};
 
 pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, Item)>) -> Result<Item, String> {
-    match builtin {
-        Builtin::Func => {
+    match builtin { Builtin::Func => {
             match (list.car(), list.cdr().car()) {
                 (Some(Item::List(args)), Some(item)) => {
                     Ok(Item::Function(args.clone(), Box::new(item.clone())))
@@ -26,9 +27,15 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
         },
         Builtin::Print => {
             match list.car() {
-                Some(Item::String(printout)) => {
-                    println!("{}", printout);
-                    Ok(Item::Nil)
+                Some(item) => {
+                    match eval(item, env) {
+                        Ok(Item::String(printout)) => {
+                            println!("{}", printout);
+                            Ok(Item::Nil)
+                        },
+                        Ok(_) => Err(format!("Error: Print must be followed by a string!")),
+                        Err(msg) => Err(msg)
+                    }
                 },
                 _ => Err(format!("Error: Print must be followed by a string!"))
             }
@@ -81,7 +88,13 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
                 },
                 _ => Err(format!("Error, if condition must be a boolean"))
             }
-        }
+        },
+        Builtin::Input => {
+            let mut buffer = String::new();
+            let stdin = io::stdin();
+            stdin.read_line(&mut buffer);
+            Ok(Item::String(buffer))
+        },
         _ => Err(format!("builtin not implemented yet"))
     }
 }

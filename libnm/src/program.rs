@@ -75,6 +75,7 @@ pub enum Builtin {
     Print,
     Let,
     If,
+    Input,
 }
 
 pub fn get_builtin(s: &String) -> Option<Builtin> {
@@ -84,6 +85,7 @@ pub fn get_builtin(s: &String) -> Option<Builtin> {
         "print" => Some(Builtin::Print),
         "let"   => Some(Builtin::Let),
         "if"    => Some(Builtin::If),
+        "input" => Some(Builtin::Input),
         _ => None
     }
 }
