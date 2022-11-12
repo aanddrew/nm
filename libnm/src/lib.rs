@@ -278,6 +278,18 @@ mod tests {
             Err(msg) => assert!(msg.as_str() == ""),
             _ => assert!(false)
         }
+
+        let fact_program = 
+            "(let (fac)
+                ((func (x)
+                    (if (<= x 1) 1 (* x (fac (- x 1))))))
+                (fac 5)
+            )";
+        let factorial = match eval_string(&format!("{}", fact_program), default_env()) {
+            Ok(Item::Number(120)) => true,
+            _ => false
+        };
+        assert!(factorial);
     }
 
     #[test]

@@ -30,7 +30,7 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
                 Some(item) => {
                     match eval(item, env) {
                         Ok(Item::String(printout)) => {
-                            println!("{}", printout);
+                            print!("{}", printout);
                             Ok(Item::Nil)
                         },
                         Ok(_) => Err(format!("Error: Print must be followed by a string!")),
@@ -70,9 +70,6 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
                 },
                 _ => return Err(format!("Error: if must be followed by condition"))
             };
-
-            println!("condition: {:?}", condition);
-
             match condition {
                 Item::Boolean(true) => {
                     match list.cdr().car() {
