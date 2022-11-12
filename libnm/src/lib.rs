@@ -83,8 +83,13 @@ mod tests {
 
         let prog = parse(vec!["(", ")"].iter().map(|s| String::from(*s)).collect()).unwrap();
         let open_close = match prog {
-            Item::List(list) => {
-                list.cdr().car().is_none() // we have this structure (())
+            Item::List(list_outer) => {
+                match list_outer.cdr().car() {
+                    Some(Item::List(list)) => {
+                        list.cdr().car().is_none() // we have this structure (())
+                    },
+                    _ => false
+                }
             },
             _ => false
         };
@@ -92,12 +97,17 @@ mod tests {
 
         let prog2 = parse(vec!["(", "nil", ")"].iter().map(|s| String::from(*s)).collect()).unwrap();
         let nil = match prog2 {
-            Item::List(list) => {
-                let first = match list.car() {
-                        Some(Item::Nil) => true,
-                        _ => false
-                };
-                first
+            Item::List(list_outer) => {
+                match list_outer.cdr().car() {
+                    Some(Item::List(list)) => {
+                        let first = match list.car() {
+                            Some(Item::Nil) => true,
+                            _ => false
+                        };
+                        first
+                    },
+                    _ => false
+                }
             },
             _ => false
         };
@@ -105,18 +115,23 @@ mod tests {
 
         let prog2 = parse(vec!["(", "nil", "nil", ")"].iter().map(|s| String::from(*s)).collect()).unwrap();
         let first_nil = match prog2 {
-            Item::List(list) => {
-                let first = match list.car() {
-                    Some(Item::Nil) => true,
-                    _ => false
-                };
+            Item::List(list_outer) => {
+                match list_outer.cdr().car() {
+                    Some(Item::List(list)) => {
+                        let first = match list.car() {
+                            Some(Item::Nil) => true,
+                            _ => false
+                        };
 
-                let second = match list.cdr().car() {
-                    Some(Item::Nil) => true,
-                    _ => false
-                };
+                        let second = match list.cdr().car() {
+                            Some(Item::Nil) => true,
+                            _ => false
+                        };
 
-                first //&& second
+                        first //&& second
+                    },
+                    _ => false
+                }
             },
             _ => false
         };
@@ -124,18 +139,23 @@ mod tests {
 
         let prog3 = parse(vec!["(", "nil", "(", "nil", ")", ")"].iter().map(|s| String::from(*s)).collect()).unwrap();
         let nested_nil = match prog3 {
-            Item::List(list) => {
-                let first = match list.car() {
-                    Some(Item::Nil) => true,
-                    _ => false
-                };
+            Item::List(list_outer) => {
+                match list_outer.cdr().car() {
+                    Some(Item::List(list)) => {
+                        let first = match list.car() {
+                            Some(Item::Nil) => true,
+                            _ => false
+                        };
 
-                let second = match list.cdr().car() {
-                    Some(Item::List(_)) => true,
-                    _ => false
-                };
+                        let second = match list.cdr().car() {
+                            Some(Item::List(_)) => true,
+                            _ => false
+                        };
 
-                first  && second //&& third
+                        first  && second //&& third
+                    },
+                    _ => false
+                }
             },
             _ => false
         };
@@ -150,45 +170,55 @@ mod tests {
 
         let prog = parse(vec!["(", "4.3", "(", "5", ")", ")"].iter().map(|s| String::from(*s)).collect()).unwrap();
         let nested_numbers = match prog {
-            Item::List(list) => {
-                let first = match list.car() {
-                    Some(Item::Float(float)) => f32::abs(float - 4.3) < 0.01,
-                    _ => false
-                };
+            Item::List(list_outer) => {
+                match list_outer.cdr().car() {
+                    Some(Item::List(list)) => {
+                        let first = match list.car() {
+                            Some(Item::Float(float)) => f32::abs(float - 4.3) < 0.01,
+                            _ => false
+                        };
 
-                let second = match list.cdr().car() {
-                    Some(Item::List(_)) => true,
-                    _ => false
-                };
+                        let second = match list.cdr().car() {
+                            Some(Item::List(_)) => true,
+                            _ => false
+                        };
 
-                let third = match list.cdr().car() {
-                    Some(Item::List(list)) => { 
-                        matches!(list.car(), Some(Item::Number(5)))
+                        let third = match list.cdr().car() {
+                            Some(Item::List(list)) => { 
+                                matches!(list.car(), Some(Item::Number(5)))
+                            },
+                            _ => false
+                        };
+
+                        first  && second && third
                     },
                     _ => false
-                };
-
-                first  && second && third
-            },
+                }
+           },
             _ => false
         };
         assert!(nested_numbers);
 
         let prog2 = parse(vec!["(", "56.2", "43.8", ")"].iter().map(|s| String::from(*s)).collect()).unwrap();
         let floats = match prog2 {
-            Item::List(list) => {
-                let first_match = match list.car() {
-                    Some(Item::Float(num)) => f32::abs(56.2 - num) < 0.001,
-                    _ => false
-                };
+            Item::List(list_outer) => {
+                match list_outer.cdr().car() {
+                    Some(Item::List(list)) => {
+                        let first_match = match list.car() {
+                            Some(Item::Float(num)) => f32::abs(56.2 - num) < 0.001,
+                            _ => false
+                        };
 
-                let second_match = match list.cdr().car() {
-                    Some(Item::Float(num)) => f32::abs(43.8 - num) < 0.001,
-                    _ => false
-                };
+                        let second_match = match list.cdr().car() {
+                            Some(Item::Float(num)) => f32::abs(43.8 - num) < 0.001,
+                            _ => false
+                        };
 
-                first_match && second_match
-            },
+                        first_match && second_match
+                    },
+                    _ => false
+                }
+           },
             _ => false
         };
         assert!(floats);
