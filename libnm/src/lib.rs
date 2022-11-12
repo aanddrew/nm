@@ -281,7 +281,7 @@ mod tests {
     }
 
     #[test]
-    fn lets() {
+    fn lets_and_funcs() {
         use eval::{eval, eval_string, default_env};
         use program::{Item, Operator};
         use list::List;
@@ -315,5 +315,39 @@ mod tests {
             Ok(Item::Number(num)) => assert!(num == 36),
             _ => assert!(false)
         }
+
+        let if_works = match eval_string(&format!("(if (< 3 2) (* 2 4) (+ 1 5))"), default_env()) {
+            Ok(Item::Number(6)) => true,
+            _ => false
+        };
+        assert!(if_works);
+
+    }
+
+    #[test]
+    fn compare() {
+        let three_eq_three = match eval_string(&format!("(== 3 3)"), default_env()) {
+            Ok(Item::Boolean((true))) => true,
+            _ => false
+        };
+        assert!(three_eq_three);
+
+        let three_eq_two = match eval_string(&format!("(== 3 2)"), default_env()) {
+            Ok(Item::Boolean((true))) => true,
+            _ => false
+        };
+        assert!(!three_eq_two);
+
+        let three_lt_2 = match eval_string(&format!("(< 3 2)"), default_env()) {
+            Ok(Item::Boolean((true))) => true,
+            _ => false
+        };
+        assert!(!three_lt_2);
+
+        let three_gt_2 = match eval_string(&format!("(> 3 2)"), default_env()) {
+            Ok(Item::Boolean((true))) => true,
+            _ => false
+        };
+        assert!(three_gt_2);
     }
 }

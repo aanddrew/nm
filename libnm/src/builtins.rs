@@ -55,6 +55,33 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
                 _ => Err(format!("Let requires two lists (names) (evals)"))
             }
         },
+        Builtin::If => {
+            let condition = match list.car() {
+                Some(item) => match eval(item, env) {
+                    Ok(result) => result,
+                    Err(msg) => return Err(msg)
+                },
+                _ => return Err(format!("Error: if must be followed by condition"))
+            };
+
+            println!("condition: {:?}", condition);
+
+            match condition {
+                Item::Boolean(true) => {
+                    match list.cdr().car() {
+                        Some(item) => eval(item, env),
+                        _ => Err(format!("Error: if must contain statement for true evaluation."))
+                    }
+                },
+                Item::Boolean(false) => {
+                    match list.cdr().cdr().car() {
+                        Some(item) => eval(item, env),
+                        _ => Err(format!("Error: if must contain statement for false evaluation."))
+                    }
+                },
+                _ => Err(format!("Error, if condition must be a boolean"))
+            }
+        }
         _ => Err(format!("builtin not implemented yet"))
     }
 }
