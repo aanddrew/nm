@@ -1,0 +1,33 @@
+(let 
+    (countup (func 
+        (start end)
+        (if (>= start end)
+            (print start)
+            (progn
+                (print start)
+                (countup (+ start 1) end)
+            )
+        )
+    ))
+    (countup 1 10)
+)
+
+(print "------------")
+
+(let
+    (square (func (x) (* x x)))
+    (squares (func (start end)
+        (if (>= start end)
+            (print (square start))
+            (progn
+                (print (square start))
+                (squares (+ start 1) end)
+            )
+        )
+    ))
+    (progn 
+        (print (square 10))
+        (print "-------")
+        (squares 1 10)
+    )
+)

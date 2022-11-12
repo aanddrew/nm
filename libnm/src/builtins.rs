@@ -30,7 +30,7 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
                 Some(item) => {
                     match eval(item, env) {
                         Ok(Item::String(printout)) => {
-                            print!("{}", printout);
+                            println!("{}", printout);
                             Ok(Item::Nil)
                         },
                         Ok(res) => {
