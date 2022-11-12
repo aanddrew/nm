@@ -41,6 +41,41 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
             }
         },
         Builtin::Let => {
+            let mut args = list.iter().peekable();
+            let mut new_env = env.clone();
+            while let Some(item) = args.next() {
+                if (args.peek().is_none()) {
+                    //this is the last one, eval it
+                    return eval(item, &new_env);
+                }
+                else {
+                    match (item) {
+                        Item::List(let_list) => {
+                            let name = let_list.car();
+
+                            let cdr = let_list.cdr();
+                            let value = cdr.car();
+                            let value_eval = match value {
+                                Some(val) => val,
+                                None => return Err(format!("Missing value in let for variable {:?}", name))
+                            };
+
+                            match (name, eval(value_eval, env)) {
+                                (Some(Item::Identifier(item_name)), Ok(result)) => {
+                                    new_env = new_env.prepend((item_name.as_str(), result))
+                                },
+                                (Some(_), _) => return Err(format!("Expected identifier in let!")),
+                                (_, Err(msg)) => return Err(msg),
+                                _ => return Err(format!("Uncategorizable error in let"))
+                            }
+                        }
+                        _ => return Err(format!("Error, expected list after let"))
+                    }
+                }
+            }
+            Err(format!("Error, couldn't evaluate let"))
+
+            /*
             match (list.car(), list.cdr().car(), list.cdr().cdr().car()) {
                 (Some(Item::List(idents)), Some(Item::List(items)), program) => {
                     let mut idents_cur = idents.iter();
@@ -61,6 +96,7 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
                 },
                 _ => Err(format!("Let requires two lists (names) (evals)"))
             }
+            */
         },
         Builtin::If => {
             let condition = match list.car() {

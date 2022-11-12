@@ -240,12 +240,22 @@ pub fn eval(program: &Item, env: &List<(&str, Item)>) -> Result<Item, String> {
             else if let Item::Function(arg_names, func) = first_arg_eval {
                 let args = list.cdr();
                 let l = Item::Builtin(Builtin::Let);
-                let val_list = args.clone();
 
                 let mut new_program_list = List::new();
                 new_program_list = new_program_list.prepend(*func);
-                new_program_list = new_program_list.prepend(Item::List(list.cdr()));
-                new_program_list = new_program_list.prepend(Item::List(arg_names));
+
+                let mut names_it = arg_names.iter();
+                let mut arg_it = args.iter();
+                while let (Some(name), Some(arg)) = (names_it.next(), arg_it.next()) {
+                    let mut arg_list = List::new();
+                    arg_list = arg_list.prepend(arg.clone());
+                    arg_list = arg_list.prepend(name.clone());
+
+                    let appender = Item::List(arg_list);
+                    new_program_list = new_program_list.prepend(appender);
+                }
+                //new_program_list = new_program_list.prepend(Item::List(list.cdr()));
+                //new_program_list = new_program_list.prepend(Item::List(arg_names));
                 new_program_list = new_program_list.prepend(Item::Builtin(Builtin::Let));
 
                 let new_program = Item::List(new_program_list);
