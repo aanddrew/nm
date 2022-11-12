@@ -109,6 +109,29 @@ pub fn builtinerate<'a>(builtin: &Builtin, list: &List<Item>, env: &List<(&str, 
             stdin.read_line(&mut buffer);
             Ok(Item::String(buffer))
         },
+        Builtin::Cat => {
+            let cdr = list.cdr();
+            let string1 = match list.car() {
+                Some(item) => match eval(item, env) {
+                    Ok(Item::String(result)) => result,
+                    Ok(result) => return Err(format!("cat takes two strings as an argument! {:?} was supplied", result)),
+                    Err(msg) => return Err(msg)
+                },
+                _ => return Err(format!("Error: cat missing first argument"))
+            };
+            let string2 = match cdr.car() {
+                Some(item) => match eval(item, env) {
+                    Ok(Item::String(result)) => result,
+                    Ok(result) => return Err(format!("cat takes two strings as an argument! {:?} was supplied", result)),
+                    Err(msg) => return Err(msg)
+                },
+                _ => {
+                    println!("string1 {}", string1);
+                    return Err(format!("Error: cat missing second argument"))
+                }
+            };
+            Ok(Item::String(format!("{}{}", string1, string2)))
+        },
         _ => Err(format!("builtin not implemented yet"))
     }
 }

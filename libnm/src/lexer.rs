@@ -3,7 +3,7 @@ use regex::Regex;
 pub fn lex(file_text : &String) -> Vec<String> {
     let open_paren = Regex::new(r"^\(").unwrap();
     let close_paren = Regex::new(r"^\)").unwrap();
-    let string = Regex::new("^\".*\"").unwrap();
+    let string = Regex::new(r#"^"[^"]*""#).unwrap();
     let ident = Regex::new(r"^[a-z][a-z0-9]*").unwrap();
     let float = Regex::new(r"^[0-9]+\.[0-9]+").unwrap();
     let num = Regex::new(r"^[0-9]+").unwrap();
@@ -35,6 +35,7 @@ pub fn lex(file_text : &String) -> Vec<String> {
                 let find = finds.next();
                 match find {
                     Some(token) => {
+						let mut token_string = token.to_string();
                         tokens.push(token.to_string());
                         s = s.split_at(token.len()).1.to_string();
                     },

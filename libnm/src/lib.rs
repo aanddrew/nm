@@ -334,6 +334,12 @@ mod tests {
         };
         assert!(if_works);
 
+        let cat_works = match eval_string(&format!("(cat \"Hello, \" \"World!\")"), default_env()) {
+            Ok(Item::String(string)) => string == "Hello, World!",
+            _ => false
+        };
+        assert!(cat_works);
+
     }
 
     #[test]

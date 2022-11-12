@@ -34,4 +34,8 @@ fn main() {
         )";
     //println!("parsed: {:?}", parse(lex(&format!("{}", fact_program))).expect("can't parse"));
     println!("{:?}", eval_string(&format!("{}", fact_program), default_env()).unwrap());
+
+    let cat_program = "(print (cat \"Hello, \" \"World!\"))";
+    println!("parsed: {:?}", parse(lex(&format!("{}", cat_program))).expect("can't parse"));
+    println!("{:?}", eval_string(&format!("{}", cat_program), default_env()).unwrap());
 }

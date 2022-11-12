@@ -4,5 +4,10 @@ cd libnm
 cargo build
 cd ..
 cd nm_test
-cargo run "$1"
+if [ "$1" ];
+then
+    cargo run "$1"
+else
+    cargo run
+fi
 cd ..
