@@ -1,0 +1,15 @@
+(let
+    (square (func (x) (* x x)))
+    (squares (func (start end)
+        (if (>= start end)
+            (print (square start))
+            (progn
+                (print (square start))
+                (squares (+ start 1) end)
+            )
+        )
+    ))
+    (progn 
+        (squares 1 10)
+    )
+)

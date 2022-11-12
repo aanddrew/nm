@@ -4,18 +4,5 @@
             1 
             (* x (fac (- x 1)))
         )))
-    (square (func (x)
-        (* x x)
-        ))
-    (cube (func (x)
-        (* x (square x x))
-        ))
-    (progn 
-        (print (fac 12))
-        (print (fac 5))
-        (print (fac 10))
-        (print (square 5))
-        (print (cube 5))
-        1
-    )
+    (print (fac 12))
 )

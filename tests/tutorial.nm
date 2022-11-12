@@ -1,0 +1,12 @@
+(* 3 (- 7 9))
+
+(let (x 89) (* x x))
+
+(let 
+    (fac (func (x) 
+        (if (== x 1) x (* x (fac (- x 1))))
+    ))
+    (fac 9)
+)
+
+(print "Hello, World!")
