@@ -9,7 +9,7 @@ pub mod builtins;
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, f32::consts::{E, PI}};
+    use std::{collections::HashMap, f32::consts::{E, PI}, default};
 
     use crate::{eval::{default_env, eval_string}, program::Item};
 
@@ -349,5 +349,11 @@ mod tests {
             _ => false
         };
         assert!(three_gt_2);
+
+        let multi = match eval_string(&format!("(== (* 3.1 2.5) (* 2.5 3.1))"), default_env()) {
+            Ok(Item::Boolean((true))) => true,
+            _ => false
+        };
+        assert!(multi);
     }
 }

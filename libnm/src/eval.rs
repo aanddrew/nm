@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Binary};
 
 use crate::
-    {program::{Item, Operator, self, BinaryOperator, Builtin, BinaryComparator}, 
+    {program::{Item, Operator, self, BinaryOperator, Builtin, BinaryComparator, UnaryOperator}, 
     list::List, 
     parser::parse, 
     lexer::lex,
@@ -9,6 +9,12 @@ use crate::
 
 fn f32_comparate(op: &BinaryComparator) -> Box<dyn Fn(f32, f32) -> bool> {
     let result = match op {
+        BinaryComparator::Eq  => |a, b| f32::abs(a - b) < 0.000001,
+        BinaryComparator::Neq => |a, b| a != b,
+        BinaryComparator::Gt  => |a, b| a > b,
+        BinaryComparator::Gte => |a, b| a >= b,
+        BinaryComparator::Lt  => |a, b| a < b,
+        BinaryComparator::Lte => |a, b| a <= b,
         _ => |a,b| false
     };
     Box::new(move |a, b| result(a,b))
@@ -111,8 +117,48 @@ fn operate(op: &BinaryOperator, args: List<Item>, env: &List<(&str, Item)>) -> R
     }
 }
 
-fn funcerate(func_name: &String, args: List<Item>, env: &List<(&str, Item)>) -> Result<Item, String> {
-    Ok(Item::Nil)
+fn f32_unarate(op: &UnaryOperator) -> Box<dyn Fn(f32) -> f32> {
+    let result = match op {
+        UnaryOperator::Exp => f32::exp,
+        UnaryOperator::Log => f32::ln,
+        UnaryOperator::Rec => |a| 1.0 / a,
+        UnaryOperator::Sin => f32::sin,
+    };
+    Box::new(move |a| result(a))
+}
+
+fn i32_unarate(op: &UnaryOperator) -> Box<dyn Fn(i32) -> f32> {
+    let result = match op {
+        UnaryOperator::Exp => |a| { f32::exp(a as f32) },
+        UnaryOperator::Log => |a| { f32::ln(a as f32) },
+        UnaryOperator::Rec => |a| 1.0 / a as f32,
+        UnaryOperator::Sin => |a| { f32::sin( a as f32) },
+    };
+    Box::new(move |a| result(a))
+}
+
+fn unarate(op: &UnaryOperator, args: List<Item>, env: &List<(&str, Item)>) -> Result<Item, String> {
+    let arg1 = args.car();
+
+    let arg1_eval = match arg1 {
+        Some(item) => match eval(item, env) {
+            Ok(evaluated) => evaluated,
+            Err(msg) => return Err(msg)
+        }
+        None => return Err(format!("Missing argument for operator {:?}", op))
+    };
+
+    match arg1_eval {
+        Item::Number(num) => {
+            let i32_func = i32_unarate(op);
+            Ok(Item::Float(i32_func(num)))
+        },
+        Item::Float(num) => {
+            let f32_func = f32_unarate(op);
+            Ok(Item::Float(f32_func(num)))
+        },
+        _ => Err(format!("Error, argument {:?}, not suitable for {:?}", arg1_eval, op))
+    }
 }
 
 pub fn default_env() -> List<(&'static str, Item)> {
@@ -141,6 +187,7 @@ pub fn eval(program: &Item, env: &List<(&str, Item)>) -> Result<Item, String> {
                 match op {
                     Operator::BinaryOperator(binop) => operate(&binop, list.cdr(), env),
                     Operator::BinaryComparator(bincomp) => comparate(&bincomp, list.cdr(), env),
+                    Operator::UnaryOperator(unop) => unarate(&unop, list.cdr(), env),
                     _ => Err(format!("Operator {:?} not implemented yet!", op))
                 }
             }
