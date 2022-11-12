@@ -15,7 +15,7 @@ fn main() {
         "(let (f) \
             ((func (x) (+ 2 x))) \
                 (f 8))";
-    println!("{:?}", parse(lex(&format!("{}", let_func_program))));
+    //println!("{:?}", parse(lex(&format!("{}", let_func_program))));
     println!("{:?}", eval_string(&format!("{}", let_func_program), default_env()).unwrap());
-    println!("{:?}", eval_string(&format!("{}", "(print \"Hi\") (print \"Hello,World\")"), default_env()).unwrap());
+    println!("[ret] {:?}", eval_string(&format!("{}", "(print \"Hi\") (print \"Hello,World\")"), default_env()).unwrap());
 }

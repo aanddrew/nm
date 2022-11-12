@@ -1,14 +1,62 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Binary};
 
 use crate::
-    {program::{Item, Operator, self, BinaryOperator, Builtin}, 
+    {program::{Item, Operator, self, BinaryOperator, Builtin, BinaryComparator}, 
     list::List, 
     parser::parse, 
     lexer::lex,
     builtins::builtinerate};
 
-fn two_floats<F>(float1: f32, float2: f32, fun: F) -> f32 where F: Fn(f32, f32) -> f32 {
-    fun(float1, float2)
+fn f32_comparate(op: &BinaryComparator) -> Box<dyn Fn(f32, f32) -> bool> {
+    let result = match op {
+        _ => |a,b| false
+    };
+    Box::new(move |a, b| result(a,b))
+}
+
+fn i32_comparate(op: &BinaryComparator) -> Box<dyn Fn(i32, i32) -> bool> {
+    let result = match op {
+        BinaryComparator::Eq  => |a, b| a == b,
+        BinaryComparator::Neq => |a, b| a != b,
+        BinaryComparator::Gt  => |a, b| a > b,
+        BinaryComparator::Gte => |a, b| a >= b,
+        BinaryComparator::Lt  => |a, b| a < b,
+        BinaryComparator::Lte => |a, b| a <= b,
+        _ => |a,b| false
+    };
+    Box::new(move |a, b| result(a,b))
+}
+
+fn comparate(op: &BinaryComparator, args: List<Item>, env: &List<(&str, Item)>) -> Result<Item, String> {
+    let cdr = args.cdr();
+    let (arg1, arg2) = (args.car(), cdr.car());
+
+    let arg1_eval = match arg1 {
+        Some(item) => match eval(item, env) {
+            Ok(evaluated) => evaluated,
+            Err(msg) => return Err(msg)
+        }
+        None => return Err(format!("Missing argument for operator {:?}", op))
+    };
+    let arg2_eval = match arg2 {
+        Some(item) => match eval(item, env) {
+            Ok(evaluated) => evaluated,
+            Err(msg) => return Err(msg)
+        }
+        None => return Err(format!("Missing argument for operator {:?}", op))
+    };
+
+    match (arg1_eval, arg2_eval) {
+        (Item::Number(num), Item::Number(num2)) => {
+            let i32_func = i32_comparate(&op);
+            Ok(Item::Boolean(i32_func(num, num2)))
+        },
+        (Item::Float(num), Item::Float(num2)) => {
+            let f32_func = f32_comparate(&op);
+            Ok(Item::Boolean(f32_func(num, num2)))
+        },
+        _ => Err(format!("Error, arguments {:?}, {:?} are not the same type", arg1, arg2)),
+    }
 }
 
 fn f32_matherate(op: &BinaryOperator) -> Box<dyn Fn(f32, f32) -> f32> {
@@ -31,7 +79,7 @@ fn i32_matherate(op: &BinaryOperator) -> Box<dyn Fn(i32, i32) -> i32> {
     Box::new(move |a, b| result(a,b))
 }
 
-fn operate(op: &Operator, args: List<Item>, env: &List<(&str, Item)>) -> Result<Item, String> {
+fn operate(op: &BinaryOperator, args: List<Item>, env: &List<(&str, Item)>) -> Result<Item, String> {
     let cdr = args.cdr();
     let (arg1, arg2) = (args.car(), cdr.car());
 
@@ -50,24 +98,16 @@ fn operate(op: &Operator, args: List<Item>, env: &List<(&str, Item)>) -> Result<
         None => return Err(format!("Missing argument for operator {:?}", op))
     };
 
-    match op {
-        Operator::BinaryOperator(binary_op) => {
-            match (arg1_eval, arg2_eval) {
-                (Item::Number(num), Item::Number(num2)) => {
-                    let i32_func = i32_matherate(&binary_op);
-                    Ok(Item::Number(i32_func(num, num2)))
-                },
-                (Item::Float(num), Item::Float(num2)) => {
-                    let f32_func = f32_matherate(&binary_op);
-                    Ok(Item::Float(f32_func(num, num2)))
-                },
-                _ => Err(format!("Error, arguments {:?}, {:?} are not the same type", arg1, arg2)),
-            }
-        }
-        _ => match (arg1, arg2) {
-            (Some(Item::Number(num)), Some(Item::Number(num2))) => Ok(Item::Number(num * num2)),
-            _ => Err(format!("Error, operator received wrong number of args"))
-        }
+    match (arg1_eval, arg2_eval) {
+        (Item::Number(num), Item::Number(num2)) => {
+            let i32_func = i32_matherate(op);
+            Ok(Item::Number(i32_func(num, num2)))
+        },
+        (Item::Float(num), Item::Float(num2)) => {
+            let f32_func = f32_matherate(op);
+            Ok(Item::Float(f32_func(num, num2)))
+        },
+        _ => Err(format!("Error, arguments {:?}, {:?} are not the same type", arg1, arg2)),
     }
 }
 
@@ -98,7 +138,11 @@ pub fn eval(program: &Item, env: &List<(&str, Item)>) -> Result<Item, String> {
             }
 
             if let Item::Operator(op) = first_arg_eval {
-                operate(&op, list.cdr(), env)
+                match op {
+                    Operator::BinaryOperator(binop) => operate(&binop, list.cdr(), env),
+                    Operator::BinaryComparator(bincomp) => comparate(&bincomp, list.cdr(), env),
+                    _ => Err(format!("Operator {:?} not implemented yet!", op))
+                }
             }
             else if let Item::Function(arg_names, func) = first_arg_eval {
                 let args = list.cdr();
@@ -126,7 +170,7 @@ pub fn eval(program: &Item, env: &List<(&str, Item)>) -> Result<Item, String> {
 
                 for evaled in evaluated_vec {
                     match evaled {
-                        Ok(item) => {
+                       Ok(item) => {
                             new_list = new_list.prepend(item);
                         },
                         Err(msg) => return Err(msg)
