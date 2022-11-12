@@ -57,8 +57,8 @@ pub fn get_operator(s: &String) -> Option<Operator> {
         ">="  => Some(Operator::BinaryComparator(BinaryComparator::Gte)),
 
         "or" => Some(Operator::BooleanOperator(BooleanOperator::Or)),
-        "and" => Some(Operator::BooleanOperator(BooleanOperator::Or)),
-        "not" => Some(Operator::BooleanOperator(BooleanOperator::Or)),
+        "and" => Some(Operator::BooleanOperator(BooleanOperator::And)),
+        "not" => Some(Operator::BooleanOperator(BooleanOperator::Not)),
 
         "sin" => Some(Operator::UnaryOperator(UnaryOperator::Sin)),
         "log" => Some(Operator::UnaryOperator(UnaryOperator::Log)),

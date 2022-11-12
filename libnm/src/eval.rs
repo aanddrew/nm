@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Binary};
 
 use crate::
-    {program::{Item, Operator, self, BinaryOperator, Builtin, BinaryComparator, UnaryOperator}, 
+    {program::{Item, Operator, self, BinaryOperator, Builtin, BinaryComparator, UnaryOperator, BooleanOperator}, 
     list::List, 
     parser::parse, 
     lexer::lex,
@@ -161,6 +161,51 @@ fn unarate(op: &UnaryOperator, args: List<Item>, env: &List<(&str, Item)>) -> Re
     }
 }
 
+fn boolerate(op: &BooleanOperator, args: List<Item>, env: &List<(&str, Item)>) -> Result<Item, String> {
+    let cdr = args.cdr();
+    let (arg1, arg2) = (args.car(), cdr.car());
+
+    let arg1_eval = match arg1 {
+        Some(item) => match eval(item, env) {
+            Ok(evaluated) => evaluated,
+            Err(msg) => return Err(msg)
+        }
+        None => return Err(format!("Missing argument for operator {:?}", op))
+    };
+
+    let arg2_eval = match arg2 {
+        Some(item) => match eval(item, env) {
+            Ok(evaluated) => Some(evaluated),
+            Err(msg) => return Err(msg)
+        }
+        None => None
+    };
+
+    match arg1_eval {
+        Item::Boolean(bool) => {
+            match op {
+                BooleanOperator::Not => Ok(Item::Boolean(!bool)),
+                BooleanOperator::And => {
+                    match arg2_eval {
+                        Some(Item::Boolean(other)) => Ok(Item::Boolean(bool && other)),
+                        _ => Err(format!("Error in boolean and : {:?} is not a boolean", arg2_eval)),
+                        None => Err(format!("Error, missing second arg to boolean and"))
+                    }
+                },
+                BooleanOperator::Or => {
+                    match arg2_eval {
+                        Some(Item::Boolean(other)) => Ok(Item::Boolean(bool || other)),
+                        _ => Err(format!("Error in boolean or : {:?} is not a boolean", arg2_eval)),
+                        None => Err(format!("Error, missing second arg to boolean or"))
+                    }
+                }
+                _ => Err(format!("Boolean operator {:?} not implemented yet", op))
+            }
+        },
+        _ => Err(format!("Error, argument {:?}, not suitable for {:?}", arg1_eval, op))
+    }
+}
+
 pub fn default_env() -> List<(&'static str, Item)> {
     let mut list = List::new();
     list = list.prepend(("e", Item::Float(std::f32::consts::E)));
@@ -188,6 +233,7 @@ pub fn eval(program: &Item, env: &List<(&str, Item)>) -> Result<Item, String> {
                     Operator::BinaryOperator(binop) => operate(&binop, list.cdr(), env),
                     Operator::BinaryComparator(bincomp) => comparate(&bincomp, list.cdr(), env),
                     Operator::UnaryOperator(unop) => unarate(&unop, list.cdr(), env),
+                    Operator::BooleanOperator(boolop) => boolerate(&boolop, list.cdr(), env),
                     _ => Err(format!("Operator {:?} not implemented yet!", op))
                 }
             }

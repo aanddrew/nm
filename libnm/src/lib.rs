@@ -355,5 +355,30 @@ mod tests {
             _ => false
         };
         assert!(multi);
+
+        let and = match eval_string(&format!("(and true true)"), default_env()) {
+            Ok(Item::Boolean((true))) => true,
+            _ => false
+        };
+        assert!(and);
+
+        let not_and = match eval_string(&format!("(and true false)"), default_env()) {
+            Ok(Item::Boolean((true))) => true,
+            _ => false
+        };
+        assert!(!not_and);
+
+        let and_complex = match eval_string(&format!("(and (== 2 2) (< 2 8))"), default_env()) {
+            Ok(Item::Boolean((true))) => true,
+            _ => false
+        };
+        assert!(and_complex);
+
+        //one of them is false
+        let or = match eval_string(&format!("(or (!= 3 2) (> 2 8))"), default_env()) {
+            Ok(Item::Boolean((true))) => true,
+            _ => false
+        };
+        assert!(or);
     }
 }
