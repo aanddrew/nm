@@ -1,4 +1,6 @@
 libnm/target
-nm_test/target
 libnm/target/.*
+nm_test/target
 nm_test/target/.*
+nm_ui/target/.*
+nm_ui/target/*

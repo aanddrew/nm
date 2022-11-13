@@ -12,3 +12,20 @@
 (print "Hello, World!")
 
 (print (cat "Hello, " "World!"))
+
+
+(progn
+    (print "What is your name?")
+    (let 
+        (x "Andrew")
+        (print (cat "Hello, " x))
+    )
+)
+
+(let
+    (music (func
+        (f t)
+        (sin (/ (* f t) (* 2.0 pi)))
+    ))
+    (music 440.0 1.5)
+)
