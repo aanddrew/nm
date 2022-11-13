@@ -1,10 +1,9 @@
 use std::sync::{Mutex, Arc};
 
-use cpal::{SampleFormat, SampleRate, Sample};
+use cpal::{SampleFormat, Sample};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 
 pub struct Player {
-    host: cpal::Host,
     device: cpal::Device,
     config: cpal::StreamConfig,
     stream: Option<cpal::Stream>,
@@ -14,33 +13,100 @@ pub struct Player {
 }
 
 pub struct PlayerBuffer {
-    buffer_size: usize,
     buffer: Vec<f32>,
     swap: Vec<f32>,
-    head: usize,
+    read_head: usize,
+    write_head: usize,
+    read_from: BufferReadFrom,
+    write_to: BufferReadFrom,
 }
 
 unsafe impl Send for PlayerBuffer { }
 unsafe impl Send for Player { }
 
+enum BufferReadFrom {
+    Buffer,
+    Swap
+}
+
 impl PlayerBuffer {
     pub fn new(sample_rate: usize) -> Self {
+        let mut buffer = Vec::new();
+        buffer.resize(sample_rate * 2, 0.0);
+        let mut swap = Vec::new();
+        swap.resize(sample_rate * 2, 0.0);
+
         PlayerBuffer {
-            head: 0,
-            buffer: Vec::new(),
-            swap: Vec::new(),
-            buffer_size: sample_rate,
+            read_head: 0,
+            write_head: 0,
+            buffer: buffer,
+            swap: swap,
+            read_from: BufferReadFrom::Buffer,
+            write_to: BufferReadFrom::Buffer,
         }
     }
 
     pub fn advance(&mut self) -> f32 {
-        self.head += 1;
-        0.0
+        let val = match self.read_from {
+            BufferReadFrom::Buffer => {
+                self.buffer.get(self.read_head).unwrap()
+            },
+            BufferReadFrom::Swap => {
+                self.swap.get(self.read_head).unwrap()
+            }
+        };
+        self.read_head += 1;
+        match self.read_from {
+            BufferReadFrom::Buffer => {
+                if self.read_head >= self.buffer.len() {
+                    self.read_head = 0;
+                    self.read_from = BufferReadFrom::Swap
+                }
+            },
+            BufferReadFrom::Swap => {
+                if self.read_head >= self.buffer.len() {
+                    self.read_head = 0;
+                    self.read_from = BufferReadFrom::Buffer
+                }
+            }
+        }
+        *val
+    }
+
+    pub fn write(&mut self, value: f32) {
+        match self.write_to {
+            BufferReadFrom::Buffer => {
+                self.buffer[self.write_head] = value
+            },
+            BufferReadFrom::Swap => {
+                self.swap[self.write_head] = value
+            }
+        };
+
+        self.write_head += 1;
+        match self.write_to {
+            BufferReadFrom::Buffer => {
+                if self.write_head >= self.buffer.len() {
+                    self.write_head = 0;
+                    self.write_to = BufferReadFrom::Swap
+                }
+            },
+            BufferReadFrom::Swap => {
+                if self.write_head >= self.buffer.len() {
+                    self.write_head = 0;
+                    self.write_to = BufferReadFrom::Buffer
+                }
+            }
+        }
+    }
+
+    pub fn buffer_size(&self ) -> usize{
+        self.buffer.len()
     }
 }
 
 impl Player {
-    fn new () -> Self {
+    pub fn new () -> Self {
         let host = cpal::default_host();
 
         let device = host.default_output_device().expect("no output device available");
@@ -58,9 +124,8 @@ impl Player {
         };
 
         Player {
-            host,
-            device,
-            config,
+            device: device,
+            config: config,
             stream: None,
             sample_rate: sample_rate as usize,
             sample_format,
@@ -68,7 +133,7 @@ impl Player {
     }
 
 
-    fn build_stream(&mut self, mutex: Arc<Mutex<PlayerBuffer>>) {
+    pub fn build_stream(mut self, mutex: Arc<Mutex<PlayerBuffer>>) -> Self {
         let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
 
         let mut next_value = move || {
@@ -110,6 +175,19 @@ impl Player {
                 }
             }
         }
-        self.stream = Some(stream)
+        self.stream = Some(stream);
+        self
+    }
+
+    pub fn sample_rate(&self) -> usize {
+        self.sample_rate
+    }
+
+    pub fn play(&mut self) {
+        self.stream.as_ref().expect("Please build stream first").play().unwrap();
+    }
+
+    pub fn pause(&mut self) {
+        self.stream.as_ref().expect("Please build stream first").pause().unwrap();
     }
 }
