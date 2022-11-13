@@ -9,3 +9,4 @@ edition = "2021"
 cpal = "0.14.1"
 rand = "0.8.5"
 threadpool = "1.8.1"
+libnm = { path = "../libnm" }
