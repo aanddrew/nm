@@ -3,7 +3,7 @@ use std::sync::{Mutex, Arc};
 use cpal::{SampleFormat, SampleRate, Sample};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 
-pub struct Player <'a>{
+pub struct Player {
     host: cpal::Host,
     device: cpal::Device,
     config: cpal::StreamConfig,
@@ -11,8 +11,6 @@ pub struct Player <'a>{
 
     sample_rate: usize,
     sample_format: cpal::SampleFormat,
-
-    buffer: Arc<Mutex<&'a mut PlayerBuffer>>
 }
 
 pub struct PlayerBuffer {
@@ -23,7 +21,7 @@ pub struct PlayerBuffer {
 }
 
 unsafe impl Send for PlayerBuffer { }
-unsafe impl Send for Player<'_> { }
+unsafe impl Send for Player { }
 
 impl PlayerBuffer {
     pub fn new(sample_rate: usize) -> Self {
@@ -41,8 +39,8 @@ impl PlayerBuffer {
     }
 }
 
-impl Player <'_> {
-    fn new <'a> (buffer: &'a mut PlayerBuffer) -> Self {
+impl Player {
+    fn new () -> Self {
         let host = cpal::default_host();
 
         let device = host.default_output_device().expect("no output device available");
@@ -66,19 +64,16 @@ impl Player <'_> {
             stream: None,
             sample_rate: sample_rate as usize,
             sample_format,
-
-            buffer: Arc::new(Mutex::new(buffer))
         }
     }
 
 
-    fn build_stream<'a>(&'a mut self) {
+    fn build_stream(&mut self, mutex: Arc<Mutex<PlayerBuffer>>) {
         let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
 
         let mut next_value = move || {
-            let mut buffer = self.buffer.lock().unwrap();
+            let mut buffer = mutex.lock().unwrap();
             let res = buffer.advance();
-            self.buffer.lock().unwrap();
             res
         };
         let channels = self.config.channels;
