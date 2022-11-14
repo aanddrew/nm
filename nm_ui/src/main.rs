@@ -6,22 +6,23 @@ use libnm::{parser::{parse, parse_string}, eval::{eval, default_env}, list::List
 pub mod player;
 
 fn main() {
-    let p: Player = Player::new();
-    let buf = PlayerBuffer::new(p.sample_rate());
-    let buf_mutex = Arc::new(Mutex::new(buf));
-    let mut p = p.build_stream(buf_mutex.clone());
+
 
     //let num = our_mutex.lock().unwrap().buffer_size();
     let pool = ThreadPool::new(32);
-    let time_mut = Arc::new(Mutex::new(0));
+    let time_mut = Arc::new(Mutex::new(0 as usize));
 
     let func = match parse_string(format!("(* (sin (* t f)) 0.5)")) {
         Ok(item) => item,
         _ => panic!("Could not parse string!")
     };
+    let p: Player = Player::new();
 
-    p.play();
-    for _ in 0..1 {
+    let buffer_len = p.sample_rate() * 3;
+    let mut buffer : Vec<f32> = Vec::new();
+    buffer.resize(buffer_len, 0.0);
+    let buf_mutex = Arc::new(Mutex::new(buffer));
+    for _ in 0..32 {
         let time_c = time_mut.clone();
         let sample_rate = p.sample_rate();
         let buf_mut = buf_mutex.clone();
@@ -30,7 +31,15 @@ fn main() {
         pool.execute(move || {
             loop {
                 let mut i = time_c.lock().unwrap();
+                if *i % (buffer_len / 10) == 0 {
+                    println!("{}%", *i / (buffer_len / 100));
+                }
+
                 *i = *i + 1;
+                //println!("{}/{}", *i, buffer_len);
+                if *i >= buffer_len {
+                    break;
+                }
                 let time = *i as f32 / sample_rate as f32;
 
                 let mut env = default_env();
@@ -44,10 +53,17 @@ fn main() {
                 };
 
                 //while !buf_mut.lock().unwrap().should_write() { }
-                buf_mut.lock().unwrap().write(val);
+                let index : usize = *i as usize;
+                buf_mut.lock().unwrap()[index] = val;
             }
         })
     }
+    pool.join();
+
+    //println!("{}", buf_mutex.lock().unwrap().get(10000).unwrap());
+
+    let mut p = p.build_stream(buf_mutex.lock().unwrap().clone());
+    p.play();
     std::thread::sleep(std::time::Duration::from_millis(3000));
     p.pause();
 }

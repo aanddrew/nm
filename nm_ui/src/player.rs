@@ -137,13 +137,18 @@ impl Player {
     }
 
 
-    pub fn build_stream(mut self, mutex: Arc<Mutex<PlayerBuffer>>) -> Self {
+    pub fn build_stream(mut self, buffer: Vec<f32>) -> Self {
         let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
 
+        let mut i = 0;
         let mut next_value = move || {
-            let mut buffer = mutex.lock().unwrap();
-            let res = buffer.advance();
-            res
+            i += 1;
+            if i >= buffer.len() {
+                0.0
+            }
+            else {
+                *buffer.get(i).unwrap()
+            }
         };
         let channels = self.config.channels;
 

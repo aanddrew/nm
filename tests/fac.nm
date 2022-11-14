@@ -1,3 +1,4 @@
+"calculates factorial"
 (let 
     (fac (func (x) 
         (if (<= x 1) 
