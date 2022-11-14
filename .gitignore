@@ -4,3 +4,5 @@ nm_test/target
 nm_test/target/.*
 nm_ui/target/.*
 nm_ui/target/*
+libnm/target/.rustc_info.json
+nm_test/target/.rustc_info.json

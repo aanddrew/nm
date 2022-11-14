@@ -32,9 +32,9 @@ enum BufferReadFrom {
 impl PlayerBuffer {
     pub fn new(sample_rate: usize) -> Self {
         let mut buffer = Vec::new();
-        buffer.resize(sample_rate * 2, 0.0);
+        buffer.resize(sample_rate * 20, 0.0);
         let mut swap = Vec::new();
-        swap.resize(sample_rate * 2, 0.0);
+        swap.resize(sample_rate * 20, 0.0);
 
         PlayerBuffer {
             read_head: 0,
@@ -102,6 +102,10 @@ impl PlayerBuffer {
 
     pub fn buffer_size(&self ) -> usize{
         self.buffer.len()
+    }
+
+    pub fn should_write(&self) -> bool {
+        self.write_head != self.read_head
     }
 }
 

@@ -15,13 +15,13 @@ fn main() {
     let pool = ThreadPool::new(32);
     let time_mut = Arc::new(Mutex::new(0));
 
-    let func = match parse_string(format!("(sin (* t f))")) {
+    let func = match parse_string(format!("(* (sin (* t f)) 0.5)")) {
         Ok(item) => item,
         _ => panic!("Could not parse string!")
     };
 
     p.play();
-    for _ in 0..32 {
+    for _ in 0..1 {
         let time_c = time_mut.clone();
         let sample_rate = p.sample_rate();
         let buf_mut = buf_mutex.clone();
@@ -43,10 +43,11 @@ fn main() {
                     Err(msg) => panic!("{}", msg.as_str())
                 };
 
+                //while !buf_mut.lock().unwrap().should_write() { }
                 buf_mut.lock().unwrap().write(val);
             }
         })
     }
-    std::thread::sleep(std::time::Duration::from_millis(2000));
+    std::thread::sleep(std::time::Duration::from_millis(3000));
     p.pause();
 }
