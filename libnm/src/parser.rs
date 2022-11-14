@@ -1,5 +1,6 @@
 use std::slice::Iter;
 
+use crate::lexer::lex;
 use crate::program::*;
 use crate::list::*;
 
@@ -74,4 +75,9 @@ pub fn parse(mut tokens: Vec<String>) -> Result<Item, String> {
     let mut iter = tokens.iter();
     //iter.next();
     parse_helper(&mut iter)
+}
+
+pub fn parse_string(s: String) -> Result<Item, String> {
+    let mut tokens = lex(&s);
+    parse(tokens)
 }

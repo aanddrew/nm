@@ -1,0 +1,26 @@
+(let 
+    (mod (func (x y)
+        (if 
+            (< x y)
+            x
+            (mod (- x y)))
+    ))
+    (fizzbuzzhelp (func (x)
+        (if 
+            (and (== (mod x 3) 0) (== (mod x 5) 0))
+            (print "fizzbuzz") 
+            (if (== (mod x 3) 0)
+                (print "fizz")
+                (if (== (mod x 5) 0)
+                    (print "buzz")
+                    ())))
+    ))
+    (fizzbuzz (func (x y)
+        (if (== x y)
+            (fizzbuzzhelp x)
+            (progn
+                (fizzbuzzhelp x)
+                (fizzbuzz (+ x 1))
+                ))
+    ))
+    (fizzbuzz 0 100))

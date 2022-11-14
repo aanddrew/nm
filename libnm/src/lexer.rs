@@ -1,13 +1,14 @@
 use regex::Regex;
 
 pub fn lex(file_text : &String) -> Vec<String> {
-    let open_paren = Regex::new(r"^\(").unwrap();
+    let open_paren = Regex::new(r"^(')?\(").unwrap();
     let close_paren = Regex::new(r"^\)").unwrap();
     let string = Regex::new(r#"^"[^"]*""#).unwrap();
-    let ident = Regex::new(r"^[a-z][a-z0-9]*").unwrap();
+    let ident = Regex::new(r"^[a-z][a-z0-9_-]*").unwrap();
     let float = Regex::new(r"^[0-9]+\.[0-9]+").unwrap();
     let num = Regex::new(r"^[0-9]+").unwrap();
     let op = Regex::new(r"^(>|<|=|!|\^|/|\*|\+|-)+").unwrap();
+	let end = Regex::new(r"^\s+$").unwrap();
 
     let starts_with_white = Regex::new(r"^\s+.").unwrap();
 
@@ -29,6 +30,9 @@ pub fn lex(file_text : &String) -> Vec<String> {
             s = s.split_at(1).1.to_string();
             continue;
         }
+		if end.is_match(&s) {
+			break;
+		}
         for reg in list.iter() {
             if reg.0.is_match(&s) {
                 let mut finds = reg.0.find_iter(&s).map(|x| x.as_str());
